@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -126,31 +127,36 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# Use console backend for local testing
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Email configuration (Gmail SMTP)
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "contactus.unilink@gmail.com"
+EMAIL_HOST_PASSWORD = "tsocqziehxihdjpm"
+DEFAULT_FROM_EMAIL = "Unilink <contactus.unilink@gmail.com>"
 
-# Optional default from email
-DEFAULT_FROM_EMAIL = 'Unilink <no-reply@unilink.local>'
 
+# DRF configuration
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    'PAGE_SIZE': 20,  
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
+    "PAGE_SIZE": 20,
 }
 
-from datetime import timedelta
 
+# JWT configuration
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=7),    # Access token valid for 7 days
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),  # Refresh token valid for 30 days

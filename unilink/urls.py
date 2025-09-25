@@ -27,10 +27,16 @@ schema_view = get_schema_view(
     openapi.Info(
         title="Unilink API",
         default_version='v1',
-        description="API documentation for Unilink social app",
+        description="API documentation for Unilink social app - A comprehensive social media platform with posts, comments, reactions, and user interactions",
+        contact=openapi.Contact(email="contact@unilink.com"),
+        license=openapi.License(name="MIT License"),
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
+    patterns=[
+        path("api/auth/", include("users.urls")),
+        path("api/social/", include("social.urls")),
+    ],
 )
 
 urlpatterns = [
@@ -38,7 +44,9 @@ urlpatterns = [
     path("api/auth/", include("users.urls")),
     path("api/social/", include("social.urls")),
 
+    # Swagger documentation
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path('swagger.json', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    path('swagger.yaml', schema_view.without_ui(cache_timeout=0), name='schema-yaml'),
 ]
-

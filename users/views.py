@@ -9,15 +9,35 @@ from django.core.mail import send_mail
 from django.conf import settings
 import jwt
 from datetime import datetime, timedelta
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 from .models import User
 from .serializers import UserSerializer, RegisterSerializer
 
 # ------------------- Register -------------------
 class RegisterView(generics.CreateAPIView):
+    """
+    Register a new user account.
+    
+    POST: Create a new user account (requires email verification)
+    """
     queryset = User.objects.all()
+    permission_classes = [AllowAny]
     serializer_class = RegisterSerializer
 
+    @swagger_auto_schema(
+        operation_description="Register a new user account",
+        request_body=RegisterSerializer,
+        responses={
+            201: openapi.Response('User Created', examples={
+                'application/json': {'message': 'User created. Check email for verification link.'}
+            }),
+            400: openapi.Response('Bad Request', examples={
+                'application/json': {'error': 'Validation errors'}
+            })
+        }
+    )
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -48,8 +68,44 @@ class RegisterView(generics.CreateAPIView):
 # ------------------- Login -------------------
 
 class LoginView(APIView):
-    permission_classes = [AllowAny]  # <-- Add this line
+    """
+    Authenticate user and return JWT tokens.
+    
+    POST: Login with email and password to get access and refresh tokens
+    """
+    permission_classes = [AllowAny]
 
+    @swagger_auto_schema(
+        operation_description="Login with email and password",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL, description='User email'),
+                'password': openapi.Schema(type=openapi.TYPE_STRING, description='User password')
+            },
+            required=['email', 'password']
+        ),
+        responses={
+            200: openapi.Response('Login Success', examples={
+                'application/json': {
+                    'refresh': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
+                    'access': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
+                    'user': {
+                        'id': '123e4567-e89b-12d3-a456-426614174000',
+                        'email': 'user@example.com',
+                        'username': 'johndoe',
+                        'full_name': 'John Doe'
+                    }
+                }
+            }),
+            400: openapi.Response('Bad Request', examples={
+                'application/json': {'error': 'Invalid credentials'}
+            }),
+            403: openapi.Response('Forbidden', examples={
+                'application/json': {'error': 'Email not verified'}
+            })
+        }
+    )
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
@@ -70,8 +126,24 @@ class LoginView(APIView):
 
 # ------------------- Delete Account -------------------
 class DeleteAccountView(APIView):
+    """
+    Delete the authenticated user's account.
+    
+    DELETE: Permanently delete the user account (requires authentication)
+    """
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_description="Delete the authenticated user's account",
+        responses={
+            200: openapi.Response('Account Deleted', examples={
+                'application/json': {'status': 'account deleted'}
+            }),
+            401: openapi.Response('Unauthorized', examples={
+                'application/json': {'detail': 'Authentication credentials were not provided.'}
+            })
+        }
+    )
     def delete(self, request):
         user = request.user
         user.delete()
@@ -80,6 +152,35 @@ class DeleteAccountView(APIView):
 
 # ------------------- Verify Email -------------------
 class VerifyEmailView(APIView):
+    """
+    Verify user email with token.
+    
+    GET: Verify user email using the token sent via email
+    """
+    permission_classes = [AllowAny]
+    @swagger_auto_schema(
+        operation_description="Verify user email with token",
+        manual_parameters=[
+            openapi.Parameter(
+                'token',
+                openapi.IN_QUERY,
+                description="Email verification token",
+                type=openapi.TYPE_STRING,
+                required=True
+            )
+        ],
+        responses={
+            200: openapi.Response('Email Verified', examples={
+                'application/json': {'status': 'Email verified'}
+            }),
+            400: openapi.Response('Bad Request', examples={
+                'application/json': {'error': 'Missing token'}
+            }),
+            400: openapi.Response('Bad Request', examples={
+                'application/json': {'error': 'Invalid or expired token'}
+            })
+        }
+    )
     def get(self, request):
         token = request.GET.get("token")
         if not token:
