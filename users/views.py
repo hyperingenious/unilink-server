@@ -11,9 +11,17 @@ import jwt
 from datetime import datetime, timedelta
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from appwrite.client import Client
+from appwrite.services.storage import Storage
+from appwrite.id import ID
+from appwrite.input_file import InputFile
+import uuid
+import io
 
 from .models import User
-from .serializers import UserSerializer, RegisterSerializer
+from .serializers import UserSerializer, RegisterSerializer, UserListSerializer
+from social.models import Follower
+from social.pagination import StandardResultsSetPagination
 
 # ------------------- Register -------------------
 class RegisterView(generics.CreateAPIView):
@@ -41,7 +49,7 @@ class RegisterView(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save(is_active=False)  # Inactive until email verified
+        user = serializer.save(is_active=True)  # Active for testing
 
         # Generate email verification token
         token_data = {
@@ -195,3 +203,144 @@ class VerifyEmailView(APIView):
             return Response({"status": "Email verified"})
         except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, User.DoesNotExist):
             return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ------------------- File Upload -------------------
+class FileUploadView(APIView):
+    """
+    Upload a file to Appwrite storage and return the file URL.
+    
+    POST: Upload a file and get its URL
+    """
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(
+        operation_description="Upload a file to Appwrite storage (No authentication required)",
+        manual_parameters=[
+            openapi.Parameter(
+                'file',
+                openapi.IN_FORM,
+                description="File to upload",
+                type=openapi.TYPE_FILE,
+                required=True
+            )
+        ],
+        responses={
+            200: openapi.Response('File Uploaded', examples={
+                'application/json': {
+                    'file_id': 'unique_file_id',
+                    'file_url': 'https://cloud.appwrite.io/v1/storage/buckets/68dd64ea00069ab481c3/files/unique_file_id/view?project=68dd64330036984d70ce',
+                    'message': 'File uploaded successfully'
+                }
+            }),
+            400: openapi.Response('Bad Request', examples={
+                'application/json': {'error': 'No file provided'}
+            }),
+            500: openapi.Response('Server Error', examples={
+                'application/json': {'error': 'Upload failed', 'details': 'Error details'}
+            })
+        }
+    )
+    def post(self, request):
+        if 'file' not in request.FILES:
+            return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        uploaded_file = request.FILES['file']
+        
+        try:
+            # Initialize Appwrite client
+            client = Client()
+            client.set_endpoint(settings.APPWRITE_ENDPOINT)
+            client.set_project(settings.APPWRITE_PROJECT_ID)
+            client.set_key(settings.APPWRITE_API_KEY)
+            
+            # Initialize Storage service
+            storage = Storage(client)
+            
+            # Generate unique file ID
+            file_id = ID.unique()
+            
+            # Create InputFile for Appwrite
+            input_file = InputFile.from_bytes(
+                uploaded_file.read(),
+                uploaded_file.name
+            )
+            
+            # Upload file to Appwrite
+            result = storage.create_file(
+                bucket_id=settings.APPWRITE_BUCKET_ID,
+                file_id=file_id,
+                file=input_file
+            )
+            
+            # Construct file URL
+            file_url = f"{settings.APPWRITE_ENDPOINT}/storage/buckets/{settings.APPWRITE_BUCKET_ID}/files/{file_id}/view?project={settings.APPWRITE_PROJECT_ID}"
+            
+            return Response({
+                "file_id": file_id,
+                "file_url": file_url,
+                "message": "File uploaded successfully"
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                "error": "Upload failed",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ------------------- User List -------------------
+class UserListView(generics.ListAPIView):
+    """
+    Get a paginated list of users excluding current user and already followed users.
+    
+    GET: Get list of users to potentially follow
+    """
+    serializer_class = UserListSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
+
+    @swagger_auto_schema(
+        operation_description="Get paginated list of users (excluding current user and already followed users)",
+        responses={
+            200: openapi.Response('Users List', examples={
+                'application/json': {
+                    'count': 25,
+                    'next': 'http://127.0.0.1:8000/api/auth/users/?page=2',
+                    'previous': None,
+                    'results': [
+                        {
+                            'id': '123e4567-e89b-12d3-a456-426614174000',
+                            'username': 'johndoe',
+                            'full_name': 'John Doe'
+                        },
+                        {
+                            'id': '456e7890-e89b-12d3-a456-426614174000',
+                            'username': 'janedoe',
+                            'full_name': 'Jane Smith'
+                        }
+                    ]
+                }
+            }),
+            401: openapi.Response('Unauthorized', examples={
+                'application/json': {'detail': 'Authentication credentials were not provided.'}
+            })
+        }
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        current_user = self.request.user
+        
+        # Get IDs of users that the current user is already following
+        following_ids = Follower.objects.filter(follower=current_user).values_list('user_id', flat=True)
+        
+        # Exclude current user and already followed users
+        queryset = User.objects.exclude(
+            id=current_user.id
+        ).exclude(
+            id__in=following_ids
+        ).order_by('username')
+        
+        return queryset

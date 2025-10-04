@@ -38,7 +38,12 @@ Create a new user account. Account will be inactive until email verification.
   "email": "user@example.com",
   "username": "johndoe",
   "full_name": "John Doe",
-  "password": "secure_password123"
+  "password": "secure_password123",
+  "institute_name": "University of Technology",
+  "dob": "1995-06-15",
+  "dept_course": "Computer Science",
+  "gender": "male",
+  "register_number": "CS2024001"
 }
 ```
 
@@ -57,7 +62,12 @@ curl -X POST http://127.0.0.1:8000/api/auth/signup/ \
     "email": "user@example.com",
     "username": "johndoe",
     "full_name": "John Doe",
-    "password": "secure_password123"
+    "password": "secure_password123",
+    "institute_name": "University of Technology",
+    "dob": "1995-06-15",
+    "dept_course": "Computer Science",
+    "gender": "male",
+    "register_number": "CS2024001"
   }'
 ```
 
@@ -87,7 +97,12 @@ Authenticate user and return JWT tokens.
     "username": "johndoe",
     "full_name": "John Doe",
     "bio": "",
-    "profile_photo": null
+    "profile_photo": null,
+    "institute_name": "University of Technology",
+    "dob": "1995-06-15",
+    "dept_course": "Computer Science",
+    "gender": "male",
+    "register_number": "CS2024001"
   }
 }
 ```
@@ -151,6 +166,102 @@ curl -X DELETE http://127.0.0.1:8000/api/auth/delete/ \
 
 ---
 
+### 5. Upload File
+**POST** `/api/auth/upload/`
+
+Upload a file to Appwrite storage and get its URL. **No authentication required.**
+
+**Headers:**
+```
+Content-Type: multipart/form-data
+```
+
+**Request Body:**
+```
+file: [file upload]
+```
+
+**Response (200 OK):**
+```json
+{
+  "file_id": "unique_file_id",
+  "file_url": "https://cloud.appwrite.io/v1/storage/buckets/68dd64ea00069ab481c3/files/unique_file_id/view?project=68dd64330036984d70ce",
+  "message": "File uploaded successfully"
+}
+```
+
+**Response (400 Bad Request):**
+```json
+{
+  "error": "No file provided"
+}
+```
+
+**Response (500 Internal Server Error):**
+```json
+{
+  "error": "Upload failed",
+  "details": "Error details"
+}
+```
+
+**cURL Example:**
+```bash
+curl -X POST http://127.0.0.1:8000/api/auth/upload/ \
+  -F "file=@path/to/your/file.jpg"
+```
+
+---
+
+### 6. Get Users List
+**GET** `/api/auth/users/`
+
+Get a paginated list of users excluding current user and already followed users.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Query Parameters:**
+- `page` (optional): Page number for pagination
+
+**Response (200 OK):**
+```json
+{
+  "count": 25,
+  "next": "http://127.0.0.1:8000/api/auth/users/?page=2",
+  "previous": null,
+  "results": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "username": "johndoe",
+      "full_name": "John Doe"
+    },
+    {
+      "id": "456e7890-e89b-12d3-a456-426614174000",
+      "username": "janedoe",
+      "full_name": "Jane Smith"
+    }
+  ]
+}
+```
+
+**Response (401 Unauthorized):**
+```json
+{
+  "detail": "Authentication credentials were not provided."
+}
+```
+
+**cURL Example:**
+```bash
+curl -X GET http://127.0.0.1:8000/api/auth/users/ \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
 ## Social Features
 
 ### Posts
@@ -183,7 +294,12 @@ Authorization: Bearer <access_token>
         "username": "author",
         "full_name": "Author Name",
         "bio": "Bio text",
-        "profile_photo": "https://example.com/photo.jpg"
+        "profile_photo": "https://example.com/photo.jpg",
+        "institute_name": "University of Technology",
+        "dob": "1995-06-15",
+        "dept_course": "Computer Science",
+        "gender": "male",
+        "register_number": "CS2024001"
       },
       "text": "This is a post content",
       "image_url": "https://example.com/image.jpg",
@@ -232,7 +348,12 @@ Content-Type: application/json
     "username": "johndoe",
     "full_name": "John Doe",
     "bio": "",
-    "profile_photo": null
+    "profile_photo": null,
+    "institute_name": "University of Technology",
+    "dob": "1995-06-15",
+    "dept_course": "Computer Science",
+    "gender": "male",
+    "register_number": "CS2024001"
   },
   "text": "This is my new post!",
   "image_url": "https://example.com/image.jpg",
@@ -281,7 +402,12 @@ Get all posts by a specific user. **No authentication required.**
         "username": "johndoe",
         "full_name": "John Doe",
         "bio": "Bio text",
-        "profile_photo": "https://example.com/photo.jpg"
+        "profile_photo": "https://example.com/photo.jpg",
+        "institute_name": "University of Technology",
+        "dob": "1995-06-15",
+        "dept_course": "Computer Science",
+        "gender": "male",
+        "register_number": "CS2024001"
       },
       "text": "User's post content",
       "image_url": "https://example.com/image.jpg",
@@ -303,7 +429,7 @@ curl -X GET http://127.0.0.1:8000/api/social/users/456e7890-e89b-12d3-a456-42661
 #### 4. Get Personalized Feed
 **GET** `/api/social/feed/`
 
-Get personalized feed (posts from followed users + own posts).
+Get personalized feed with timestamp-based pagination and gender distribution. For male users, the feed shows 70% posts from female users.
 
 **Headers:**
 ```
@@ -312,6 +438,8 @@ Authorization: Bearer <access_token>
 
 **Query Parameters:**
 - `page` (optional): Page number for pagination
+- `timestamp` (optional): ISO timestamp for pagination (e.g., "2024-01-15T10:30:00Z")
+- `type` (optional): Pagination direction - "new" (newer than timestamp) or "old" (older than timestamp). Default: "old"
 
 **Response (200 OK):**
 ```json
@@ -328,7 +456,12 @@ Authorization: Bearer <access_token>
         "username": "followed_user",
         "full_name": "Followed User",
         "bio": "Bio text",
-        "profile_photo": "https://example.com/photo.jpg"
+        "profile_photo": "https://example.com/photo.jpg",
+        "institute_name": "University of Technology",
+        "dob": "1995-06-15",
+        "dept_course": "Computer Science",
+        "gender": "female",
+        "register_number": "CS2024002"
       },
       "text": "Post from someone you follow",
       "image_url": null,
@@ -340,11 +473,32 @@ Authorization: Bearer <access_token>
 }
 ```
 
-**cURL Example:**
+**Usage Examples:**
+
+**Get latest posts:**
 ```bash
 curl -X GET http://127.0.0.1:8000/api/social/feed/ \
   -H "Authorization: Bearer <access_token>"
 ```
+
+**Get older posts (pagination):**
+```bash
+curl -X GET "http://127.0.0.1:8000/api/social/feed/?timestamp=2024-01-15T10:30:00Z&type=old" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+**Get newer posts (refresh):**
+```bash
+curl -X GET "http://127.0.0.1:8000/api/social/feed/?timestamp=2024-01-15T10:30:00Z&type=new" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+**Notes:**
+- For male users, the feed automatically shows 70% posts from female users
+- `type=new` returns posts newer than the timestamp
+- `type=old` returns posts older than the timestamp
+- If no timestamp is provided, returns latest posts
+- Posts are ordered chronologically (newest first for 'old', oldest first for 'new')
 
 ---
 
@@ -366,7 +520,12 @@ Get details of a specific post. **No authentication required.**
     "username": "johndoe",
     "full_name": "John Doe",
     "bio": "Bio text",
-    "profile_photo": "https://example.com/photo.jpg"
+    "profile_photo": "https://example.com/photo.jpg",
+    "institute_name": "University of Technology",
+    "dob": "1995-06-15",
+    "dept_course": "Computer Science",
+    "gender": "male",
+    "register_number": "CS2024001"
   },
   "text": "Detailed post content",
   "image_url": "https://example.com/image.jpg",
@@ -483,34 +642,45 @@ Get all top-level comments for a specific post. **No authentication required.**
         "username": "commenter",
         "full_name": "Comment Author",
         "bio": "",
-        "profile_photo": null
+        "profile_photo": null,
+        "institute_name": "University of Technology",
+        "dob": "1995-06-15",
+        "dept_course": "Computer Science",
+        "gender": "male",
+        "register_number": "CS2024001"
       },
       "post": "123e4567-e89b-12d3-a456-426614174000",
       "parent": null,
       "text": "This is a top-level comment",
       "created_at": "2024-01-15T11:00:00Z",
-      "subcomments": [
-        {
-          "id": "345e6789-e89b-12d3-a456-426614174000",
-          "user": {
-            "id": "678e9012-e89b-12d3-a456-426614174000",
-            "email": "replier@example.com",
-            "username": "replier",
-            "full_name": "Reply Author",
-            "bio": "",
-            "profile_photo": null
-          },
-          "post": "123e4567-e89b-12d3-a456-426614174000",
-          "parent": "789e0123-e89b-12d3-a456-426614174000",
-          "text": "This is a reply",
-          "created_at": "2024-01-15T11:15:00Z",
-          "subcomments": []
-        }
-      ]
+      "subcomments": []
+    },
+    {
+      "id": "345e6789-e89b-12d3-a456-426614174000",
+      "user": {
+        "id": "678e9012-e89b-12d3-a456-426614174000",
+        "email": "commenter2@example.com",
+        "username": "commenter2",
+        "full_name": "Another Commenter",
+        "bio": "Bio text",
+        "profile_photo": "https://example.com/photo.jpg",
+        "institute_name": "University of Technology",
+        "dob": "1995-06-15",
+        "dept_course": "Computer Science",
+        "gender": "female",
+        "register_number": "CS2024002"
+      },
+      "post": "123e4567-e89b-12d3-a456-426614174000",
+      "parent": null,
+      "text": "Another top-level comment",
+      "created_at": "2024-01-15T11:30:00Z",
+      "subcomments": []
     }
   ]
 }
 ```
+
+**Note:** This endpoint returns only top-level comments (no replies). To get replies to a specific comment, use the `/api/social/comments/{comment_id}/replies/` endpoint.
 
 **cURL Example:**
 ```bash
@@ -640,7 +810,52 @@ curl -X DELETE http://127.0.0.1:8000/api/social/follow/ \
 
 ---
 
-#### 3. Get User Followers
+#### 3. Check Follow Status
+**GET** `/api/social/follow-status/`
+
+Check if the current user is following a specific user.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Query Parameters:**
+- `user_id` (required): UUID of the user to check follow status for
+
+**Response (200 OK):**
+```json
+{
+  "is_following": true,
+  "user_id": "456e7890-e89b-12d3-a456-426614174000",
+  "username": "johndoe",
+  "full_name": "John Doe"
+}
+```
+
+**Response (400 Bad Request):**
+```json
+{
+  "error": "user_id parameter is required"
+}
+```
+
+**Response (404 Not Found):**
+```json
+{
+  "error": "User not found"
+}
+```
+
+**cURL Example:**
+```bash
+curl -X GET "http://127.0.0.1:8000/api/social/follow-status/?user_id=456e7890-e89b-12d3-a456-426614174000" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
+#### 4. Get User Followers
 **GET** `/api/social/users/{user_id}/followers/`
 
 Get list of users following a specific user. **No authentication required.**
@@ -679,7 +894,7 @@ curl -X GET http://127.0.0.1:8000/api/social/users/456e7890-e89b-12d3-a456-42661
 
 ---
 
-#### 4. Get User Following
+#### 5. Get User Following
 **GET** `/api/social/users/{user_id}/following/`
 
 Get list of users that a specific user follows. **No authentication required.**
@@ -894,7 +1109,12 @@ Search for posts by text content. **No authentication required.**
         "username": "johndoe",
         "full_name": "John Doe",
         "bio": "",
-        "profile_photo": null
+        "profile_photo": null,
+        "institute_name": "University of Technology",
+        "dob": "1995-06-15",
+        "dept_course": "Computer Science",
+        "gender": "male",
+        "register_number": "CS2024001"
       },
       "text": "This post contains the search term",
       "image_url": null,
@@ -1011,6 +1231,11 @@ curl -X GET "http://127.0.0.1:8000/api/social/search/users/?q=john"
   "full_name": "string (max 150 chars, required)",
   "bio": "string (optional, default: '')",
   "profile_photo": "URL (optional)",
+  "institute_name": "string (max 200 chars, required)",
+  "dob": "date (required)",
+  "dept_course": "string (max 200 chars, required)",
+  "gender": "string (choices: 'male', 'female', 'others', required)",
+  "register_number": "string (unique, max 50 chars, required)",
   "is_active": "boolean (default: false)",
   "is_staff": "boolean (default: false)",
   "date_joined": "datetime (auto-generated)"
@@ -1125,6 +1350,7 @@ https://yourdomain.com/api/
 - User Posts: `GET /api/social/users/{user_id}/posts/`
 - Post Details: `GET /api/social/posts/{id}/`
 - User Profile: `GET /api/social/users/{id}/profile/`
+
 - Post Comments: `GET /api/social/posts/{post_id}/comments/`
 - Comment Replies: `GET /api/social/comments/{comment_id}/replies/`
 - User Followers: `GET /api/social/users/{user_id}/followers/`
@@ -1132,14 +1358,16 @@ https://yourdomain.com/api/
 - Post Likes: `GET /api/social/posts/{post_id}/likes/`
 - Search Posts: `GET /api/social/search/posts/`
 - Search Users: `GET /api/social/search/users/`
+- File Upload: `POST /api/auth/upload/`
 
 ### Protected Endpoints (Authentication Required)
-- All authentication endpoints (signup, login, verify-email, delete)
+- All authentication endpoints (signup, login, verify-email, delete, users list)
 - Create Post: `POST /api/social/posts/`
 - List Posts: `GET /api/social/posts/`
 - Feed: `GET /api/social/feed/`
 - Create Comment: `POST /api/social/comments/`
 - Follow/Unfollow: `POST/DELETE /api/social/follow/`
+- Check Follow Status: `GET /api/social/follow-status/`
 - Add/Remove Reaction: `POST/DELETE /api/social/react/`
 
 ---
@@ -1162,11 +1390,11 @@ https://yourdomain.com/api/
 
 ## API Status: ✅ FULLY FUNCTIONAL
 
-All 14+ endpoints have been tested and are working correctly:
-- ✅ Authentication (Register, Login, Verify Email, Delete Account)
+All 17+ endpoints have been tested and are working correctly:
+- ✅ Authentication (Register, Login, Verify Email, Delete Account, File Upload, Users List)
 - ✅ Posts (List, Create, Feed, User Posts, Post Details)
 - ✅ Comments (Create, Get Post Comments, Get Comment Replies)
-- ✅ Social (Follow/Unfollow, Get Followers/Following)
+- ✅ Social (Follow/Unfollow, Check Follow Status, Get Followers/Following)
 - ✅ Reactions (Add/Remove Like, Get Post Likes)
 - ✅ Profiles (Get User Profile)
 - ✅ Search (Search Posts, Search Users)

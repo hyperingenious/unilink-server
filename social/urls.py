@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (
-    PostListCreateView, CommentCreateView, FollowerView, PostReactionView,
+    PostListCreateView, CommentCreateView, FollowerView, FollowStatusView, PostReactionView,
     UserPostsView, FeedView, PostDetailView, PostCommentsView, CommentRepliesView,
     FollowersListView, FollowingListView, PostLikesListView, UserProfileView,
     SearchPostsView, SearchUsersView
@@ -52,6 +52,13 @@ urlpatterns = [
     # Request Body: {"user_id": "uuid"}
     # Response: Success/error message
     path("follow/", FollowerView.as_view(), name="follow"),
+    
+    # FOLLOW STATUS
+    # GET /follow-status/ - Check if current user is following a specific user
+    # Authentication: Required
+    # Query Parameters: ?user_id=uuid
+    # Response: Follow status with user details
+    path("follow-status/", FollowStatusView.as_view(), name="follow-status"),
     
     # REACTIONS ENDPOINTS
     # POST /react/ - Add reaction to post (like/comment)

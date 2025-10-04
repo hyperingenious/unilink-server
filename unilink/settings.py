@@ -86,7 +86,7 @@ DATABASES = {
         "USER": "user_unilink",
         "PASSWORD": "unilink_password",
         "HOST": "localhost",
-        "PORT": "5432",
+        "PORT": "5433",
     }
 }
 
@@ -163,3 +163,9 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": True,
 }
+
+# Appwrite configuration
+APPWRITE_PROJECT_ID = "68dd64330036984d70ce"
+APPWRITE_BUCKET_ID = "68dd64ea00069ab481c3"
+APPWRITE_API_KEY = "standard_330be7a52d4c60d450a92c147ecb0684ca63dbb7e1d876bba61442e78d1e282cde48435a7884fc515eea3be66113e023575648e8b636f4a27e83d263e84d07c5c445f544b8a8889c5934bafc439ead8d28342752d8e2b395a3708f560fa6c022215642055e3e4e38bbea31f71bd83c3b7489cba61d4c6657806d3536a8c2b9b0"
+APPWRITE_ENDPOINT = "https://cloud.appwrite.io/v1"

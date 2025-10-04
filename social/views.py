@@ -7,6 +7,9 @@ from django.db.models import Q, Count
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework.permissions import AllowAny
+from datetime import datetime
+from django.utils import timezone
+import random
 
 
 from .models import Post, Comment, Follower, PostReaction
@@ -50,9 +53,13 @@ class UserPostsView(generics.ListAPIView):
 
 class FeedView(generics.ListAPIView):
     """
-    Get personalized feed for authenticated user.
+    Get personalized feed for authenticated user with timestamp-based pagination and gender distribution.
     
     GET: Retrieve a paginated list of posts from users you follow plus your own posts
+    Query Parameters:
+    - timestamp: ISO timestamp for pagination
+    - type: 'new' (posts newer than timestamp) or 'old' (posts older than timestamp)
+    - page: Page number for pagination
     """
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -61,7 +68,85 @@ class FeedView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         following_ids = user.following.values_list("user_id", flat=True)
-        return Post.objects.filter(Q(user__in=following_ids) | Q(user=user)).order_by('-created_at')
+        
+        # Base queryset: posts from followed users + own posts
+        base_queryset = Post.objects.filter(Q(user__in=following_ids) | Q(user=user))
+        
+        # Get timestamp and type parameters
+        timestamp = self.request.query_params.get('timestamp')
+        pagination_type = self.request.query_params.get('type', 'old')  # Default to 'old'
+        
+        if timestamp:
+            try:
+                # Parse timestamp
+                ts = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                
+                if pagination_type == 'new':
+                    # Get posts newer than timestamp
+                    queryset = base_queryset.filter(created_at__gt=ts).order_by('created_at')
+                else:  # 'old'
+                    # Get posts older than timestamp
+                    queryset = base_queryset.filter(created_at__lt=ts).order_by('-created_at')
+            except ValueError:
+                # Invalid timestamp, return latest posts
+                queryset = base_queryset.order_by('-created_at')
+        else:
+            # No timestamp, return latest posts
+            queryset = base_queryset.order_by('-created_at')
+        
+        # Apply gender-based distribution for male users
+        if user.gender == 'male':
+            queryset = self._apply_gender_distribution(queryset)
+        
+        return queryset
+
+    def _apply_gender_distribution(self, queryset):
+        """
+        For male users, ensure 70% of posts are from female users.
+        """
+        # Get all posts
+        all_posts = list(queryset)
+        
+        if not all_posts:
+            return queryset
+        
+        # Separate posts by gender
+        female_posts = []
+        male_posts = []
+        other_posts = []
+        
+        for post in all_posts:
+            if post.user.gender == 'female':
+                female_posts.append(post)
+            elif post.user.gender == 'male':
+                male_posts.append(post)
+            else:
+                other_posts.append(post)
+        
+        # Calculate target distribution
+        total_posts = len(all_posts)
+        target_female_count = int(total_posts * 0.7)  # 70% female posts
+        target_male_count = total_posts - target_female_count  # Remaining for male/other
+        
+        # If we have enough female posts, prioritize them
+        if len(female_posts) >= target_female_count:
+            # Take 70% female posts
+            selected_female = random.sample(female_posts, target_female_count)
+            # Take remaining from male/other posts
+            remaining_posts = male_posts + other_posts
+            if len(remaining_posts) >= target_male_count:
+                selected_others = random.sample(remaining_posts, target_male_count)
+            else:
+                selected_others = remaining_posts
+            
+            # Combine and maintain chronological order
+            selected_posts = selected_female + selected_others
+            selected_posts.sort(key=lambda x: x.created_at, reverse=True)
+            
+            return selected_posts
+        else:
+            # Not enough female posts, return all available posts
+            return all_posts
 
 class PostDetailView(generics.RetrieveAPIView):
     """
@@ -176,6 +261,72 @@ class FollowerView(APIView):
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
 
+
+class FollowStatusView(APIView):
+    """
+    Check if the current user is following a specific user.
+    
+    GET: Check follow status
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description="Check if current user is following a specific user",
+        manual_parameters=[
+            openapi.Parameter(
+                'user_id',
+                openapi.IN_QUERY,
+                description="ID of user to check follow status for",
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_UUID,
+                required=True
+            )
+        ],
+        responses={
+            200: openapi.Response('Follow Status', examples={
+                'application/json': {
+                    'is_following': True,
+                    'user_id': '123e4567-e89b-12d3-a456-426614174000',
+                    'username': 'johndoe'
+                }
+            }),
+            400: openapi.Response('Bad Request', examples={
+                'application/json': {'error': 'user_id parameter is required'}
+            }),
+            404: openapi.Response('Not Found', examples={
+                'application/json': {'error': 'User not found'}
+            }),
+            401: openapi.Response('Unauthorized', examples={
+                'application/json': {'detail': 'Authentication credentials were not provided.'}
+            })
+        }
+    )
+    def get(self, request):
+        user_id = request.GET.get('user_id')
+        
+        if not user_id:
+            return Response({"error": "user_id parameter is required"}, status=400)
+        
+        try:
+            target_user = User.objects.get(id=user_id)
+            
+            # Check if current user is following the target user
+            is_following = Follower.objects.filter(
+                user=target_user,
+                follower=request.user
+            ).exists()
+            
+            return Response({
+                "is_following": is_following,
+                "user_id": str(target_user.id),
+                "username": target_user.username,
+                "full_name": target_user.full_name
+            })
+            
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
+
 class FollowersListView(generics.ListAPIView):
     """
     Get list of users following a specific user.
@@ -274,7 +425,7 @@ class PostLikesListView(generics.ListAPIView):
 
     def get_queryset(self):
         post_id = self.kwargs["post_id"]
-        user_ids = PostReaction.objects.filter(post_id=post_id, reaction_type=PostReaction.LIKE).values_list("user_id", flat=True)
+        user_ids = PostReaction.objects.filter(post_id=post_id, reaction_type='like').values_list("user_id", flat=True)
         return User.objects.filter(id__in=user_ids)
 
 # ------------------- Profiles -------------------

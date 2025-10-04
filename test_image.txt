@@ -1,0 +1,2 @@
+This is a test image file for upload testing.
+You can replace this with any actual image file you have locally.
