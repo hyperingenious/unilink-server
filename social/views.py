@@ -18,7 +18,7 @@ from .serializers import (
     PostReactionSerializer, UserProfileSerializer
 )
 from users.models import User
-from .pagination import StandardResultsSetPagination
+from .pagination import StandardResultsSetPagination, TimestampBasedPagination
 
 # ------------------- Posts -------------------
 class PostListCreateView(generics.ListCreateAPIView):
@@ -59,11 +59,10 @@ class FeedView(generics.ListAPIView):
     Query Parameters:
     - timestamp: ISO timestamp for pagination
     - type: 'new' (posts newer than timestamp) or 'old' (posts older than timestamp)
-    - page: Page number for pagination
     """
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
-    pagination_class = StandardResultsSetPagination
+    pagination_class = TimestampBasedPagination
 
     def get_queryset(self):
         user = self.request.user

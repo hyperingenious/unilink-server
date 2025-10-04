@@ -437,7 +437,6 @@ Authorization: Bearer <access_token>
 ```
 
 **Query Parameters:**
-- `page` (optional): Page number for pagination
 - `timestamp` (optional): ISO timestamp for pagination (e.g., "2024-01-15T10:30:00Z")
 - `type` (optional): Pagination direction - "new" (newer than timestamp) or "old" (older than timestamp). Default: "old"
 
@@ -445,7 +444,7 @@ Authorization: Bearer <access_token>
 ```json
 {
   "count": 15,
-  "next": "http://127.0.0.1:8000/api/social/feed/?page=2",
+  "next": "http://127.0.0.1:8000/api/social/feed/?timestamp=2024-01-15T10:30:00Z&type=old",
   "previous": null,
   "results": [
     {
@@ -486,6 +485,7 @@ curl -X GET http://127.0.0.1:8000/api/social/feed/ \
 curl -X GET "http://127.0.0.1:8000/api/social/feed/?timestamp=2024-01-15T10:30:00Z&type=old" \
   -H "Authorization: Bearer <access_token>"
 ```
+
 
 **Get newer posts (refresh):**
 ```bash

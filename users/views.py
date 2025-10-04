@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from appwrite.client import Client
-from appwrite.services.storage import Storage
+from appwjite.services.storage import Storage
 from appwrite.id import ID
 from appwrite.input_file import InputFile
 import uuid
