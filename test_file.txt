@@ -1,2 +1,0 @@
-This is a test file for the upload endpoint.
-File upload functionality is working correctly!
