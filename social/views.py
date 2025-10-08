@@ -36,6 +36,21 @@ class PostListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
+
+class PostDeleteView(generics.DestroyAPIView):
+    """
+    Delete a specific post by the authenticated user.
+    
+    DELETE: Delete a post (only the post owner can delete their own posts)
+    """
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = "id"
+
+    def get_queryset(self):
+        # Only allow users to delete their own posts
+        return Post.objects.filter(user=self.request.user)
+
 class UserPostsView(generics.ListAPIView):
     """
     Get all posts by a specific user.
@@ -353,6 +368,20 @@ class FollowingListView(generics.ListAPIView):
 
     def get_queryset(self):
         return User.objects.filter(followers__follower_id=self.kwargs["user_id"])
+
+
+class CurrentUserFollowingListView(generics.ListAPIView):
+    """
+    Get list of users that the current authenticated user is following.
+    
+    GET: Retrieve a paginated list of users that the current user follows
+    """
+    serializer_class = UserProfileSerializer
+    pagination_class = StandardResultsSetPagination
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return User.objects.filter(followers__follower_id=self.request.user.id)
 
 # ------------------- Post Reactions -------------------
 class PostReactionView(APIView):

@@ -1,8 +1,8 @@
 from django.urls import path
 from .views import (
-    PostListCreateView, CommentCreateView, FollowerView, FollowStatusView, PostReactionView,
+    PostListCreateView, PostDeleteView, CommentCreateView, FollowerView, FollowStatusView, PostReactionView,
     UserPostsView, FeedView, PostDetailView, PostCommentsView, CommentRepliesView,
-    FollowersListView, FollowingListView, PostLikesListView, UserProfileView,
+    FollowersListView, FollowingListView, CurrentUserFollowingListView, PostLikesListView, UserProfileView,
     SearchPostsView, SearchUsersView
 )
 
@@ -37,6 +37,12 @@ urlpatterns = [
     # Request Body (POST): {"text": "string", "image_url": "string (optional)"}
     # Response: List of posts or created post object
     path("posts/", PostListCreateView.as_view(), name="posts"),
+    
+    # DELETE /posts/{id}/ - Delete a specific post (only by post owner)
+    # Authentication: Required
+    # Parameters: id (UUID) in URL path
+    # Response: 204 No Content on success
+    path("posts/<uuid:id>/delete/", PostDeleteView.as_view(), name="post-delete"),
     
     # COMMENTS ENDPOINTS  
     # POST /comments/ - Create a new comment
@@ -119,6 +125,12 @@ urlpatterns = [
     # Parameters: user_id (UUID) in URL path
     # Response: Paginated list of user profiles that the specified user follows
     path("users/<uuid:user_id>/following/", FollowingListView.as_view()),
+    
+    # CURRENT USER FOLLOWING LIST
+    # GET /following/ - Get list of users that the current user is following
+    # Authentication: Required
+    # Response: Paginated list of user profiles that the current user follows
+    path("following/", CurrentUserFollowingListView.as_view()),
     
     # POST LIKES
     # GET /posts/{post_id}/likes/ - Get list of users who liked a specific post

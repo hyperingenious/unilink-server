@@ -43,9 +43,12 @@ Create a new user account. Account will be inactive until email verification.
   "dob": "1995-06-15",
   "dept_course": "Computer Science",
   "gender": "male",
-  "register_number": "CS2024001"
+  "register_number": "CS2024001",
+  "profile_photo": "https://example.com/profile.jpg"
 }
 ```
+
+**Note:** `profile_photo` is optional. If not provided, it will be `null`.
 
 **Response (201 Created):**
 ```json
@@ -166,7 +169,62 @@ curl -X DELETE http://127.0.0.1:8000/api/auth/delete/ \
 
 ---
 
-### 5. Upload File
+### 5. Edit User Profile
+**PATCH** `/api/auth/profile/edit/`
+
+Update user profile information. **Authentication required.**
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "full_name": "Updated Full Name",
+  "bio": "Updated bio text",
+  "profile_photo": "https://example.com/new-profile.jpg",
+  "institute_name": "Updated University",
+  "dept_course": "Updated Department/Course"
+}
+```
+
+**Note:** All fields are optional. Only include the fields you want to update.
+
+**Response (200 OK):**
+```json
+{
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "email": "user@example.com",
+  "username": "johndoe",
+  "full_name": "Updated Full Name",
+  "bio": "Updated bio text",
+  "profile_photo": "https://example.com/new-profile.jpg",
+  "institute_name": "Updated University",
+  "dob": "1995-06-15",
+  "dept_course": "Updated Department/Course",
+  "gender": "male",
+  "register_number": "CS2024001"
+}
+```
+
+**cURL Example:**
+```bash
+curl -X PATCH http://127.0.0.1:8000/api/auth/profile/edit/ \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "full_name": "Updated Full Name",
+    "bio": "Updated bio text",
+    "profile_photo": "https://example.com/new-profile.jpg"
+  }'
+```
+
+---
+
+### 6. Upload File
 **POST** `/api/auth/upload/`
 
 Upload a file to Appwrite storage and get its URL. **No authentication required.**
@@ -426,7 +484,40 @@ curl -X GET http://127.0.0.1:8000/api/social/users/456e7890-e89b-12d3-a456-42661
 
 ---
 
-#### 4. Get Personalized Feed
+#### 4. Delete Post
+**DELETE** `/api/social/posts/{id}/delete/`
+
+Delete a specific post. **Authentication required.** Only the post owner can delete their own posts.
+
+**Path Parameters:**
+- `id` (required): UUID of the post to delete
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Response (204 No Content):**
+```
+No content returned on successful deletion
+```
+
+**Response (404 Not Found):**
+```json
+{
+  "detail": "Not found."
+}
+```
+
+**cURL Example:**
+```bash
+curl -X DELETE http://127.0.0.1:8000/api/social/posts/123e4567-e89b-12d3-a456-426614174000/delete/ \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
+#### 5. Get Personalized Feed
 **GET** `/api/social/feed/`
 
 Get personalized feed with timestamp-based pagination and gender distribution. For male users, the feed shows 70% posts from female users.
@@ -1166,6 +1257,58 @@ Search for users by username or full name. **No authentication required.**
 **cURL Example:**
 ```bash
 curl -X GET "http://127.0.0.1:8000/api/social/search/users/?q=john"
+```
+
+---
+
+#### 6. Get Current User Following List
+**GET** `/api/social/following/`
+
+Get list of users that the current authenticated user is following. **Authentication required.**
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Query Parameters:**
+- `page` (optional): Page number for pagination
+
+**Response (200 OK):**
+```json
+{
+  "count": 25,
+  "next": "http://127.0.0.1:8000/api/social/following/?page=2",
+  "previous": null,
+  "results": [
+    {
+      "id": "456e7890-e89b-12d3-a456-426614174000",
+      "username": "johndoe",
+      "full_name": "John Doe",
+      "bio": "Software Developer",
+      "profile_photo": "https://example.com/photo.jpg",
+      "followers_count": 150,
+      "following_count": 75,
+      "posts_count": 200
+    },
+    {
+      "id": "789e0123-e89b-12d3-a456-426614174001",
+      "username": "janedoe",
+      "full_name": "Jane Doe",
+      "bio": "Designer",
+      "profile_photo": "https://example.com/jane.jpg",
+      "followers_count": 300,
+      "following_count": 120,
+      "posts_count": 150
+    }
+  ]
+}
+```
+
+**cURL Example:**
+```bash
+curl -X GET http://127.0.0.1:8000/api/social/following/ \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 ---

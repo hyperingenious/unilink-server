@@ -15,7 +15,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["email", "username", "full_name", "password", 
-                 "institute_name", "dob", "dept_course", "gender", "register_number"]
+                 "institute_name", "dob", "dept_course", "gender", "register_number", "profile_photo"]
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
@@ -25,3 +25,16 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "username", "full_name"]
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["full_name", "bio", "profile_photo", "institute_name", "dept_course"]
+        extra_kwargs = {
+            'full_name': {'required': False},
+            'bio': {'required': False},
+            'profile_photo': {'required': False},
+            'institute_name': {'required': False},
+            'dept_course': {'required': False},
+        }

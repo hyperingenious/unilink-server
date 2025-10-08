@@ -19,7 +19,7 @@ import uuid
 import io
 
 from .models import User
-from .serializers import UserSerializer, RegisterSerializer, UserListSerializer
+from .serializers import UserSerializer, RegisterSerializer, UserUpdateSerializer, UserListSerializer
 from social.models import Follower
 from social.pagination import StandardResultsSetPagination
 
@@ -71,6 +71,20 @@ class RegisterView(generics.CreateAPIView):
         )
 
         return Response({"message": "User created. Check email for verification link."}, status=status.HTTP_201_CREATED)
+
+
+# ------------------- User Profile Edit -------------------
+class UserProfileEditView(generics.UpdateAPIView):
+    """
+    Update user profile information.
+    
+    PATCH: Update user profile fields (full_name, bio, profile_photo, institute_name, dept_course)
+    """
+    serializer_class = UserUpdateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
 
 
 # ------------------- Login -------------------
