@@ -1153,17 +1153,43 @@ Get detailed profile information for a user. **No authentication required.**
 **Path Parameters:**
 - `id` (required): UUID of the user
 
+**Response Fields:**
+- `id`: Unique identifier for the user
+- `email`: User's email address
+- `username`: User's unique username
+- `full_name`: User's full name
+- `bio`: User's biography/description
+- `profile_photo`: URL to user's profile photo
+- `institute_name`: Name of the educational institution
+- `dob`: Date of birth (YYYY-MM-DD format)
+- `dept_course`: Department or course of study
+- `gender`: User's gender (male/female/others)
+- `register_number`: Unique registration number
+- `date_joined`: When the user joined the platform (ISO format)
+- `followers_count`: Number of users following this user
+- `following_count`: Number of users this user follows
+- `posts_count`: Number of posts created by this user
+- `age`: Calculated age based on date of birth
+
 **Response (200 OK):**
 ```json
 {
   "id": "456e7890-e89b-12d3-a456-426614174000",
+  "email": "johndoe@example.com",
   "username": "johndoe",
   "full_name": "John Doe",
   "bio": "Software developer and tech enthusiast",
   "profile_photo": "https://example.com/profile.jpg",
+  "institute_name": "University of Technology",
+  "dob": "1995-03-15",
+  "dept_course": "Computer Science Engineering",
+  "gender": "male",
+  "register_number": "REG123456",
+  "date_joined": "2024-01-15T10:30:00Z",
   "followers_count": 150,
   "following_count": 75,
-  "posts_count": 200
+  "posts_count": 200,
+  "age": 29
 }
 ```
 
@@ -1528,18 +1554,3 @@ https://yourdomain.com/api/
 - **Important**: Use `post` field (not `post_id`) when creating comments
 - Feed shows posts from users you follow plus your own posts
 - All public endpoints work without authentication for better user experience
-
----
-
-## API Status: ✅ FULLY FUNCTIONAL
-
-All 17+ endpoints have been tested and are working correctly:
-- ✅ Authentication (Register, Login, Verify Email, Delete Account, File Upload, Users List)
-- ✅ Posts (List, Create, Feed, User Posts, Post Details)
-- ✅ Comments (Create, Get Post Comments, Get Comment Replies)
-- ✅ Social (Follow/Unfollow, Check Follow Status, Get Followers/Following)
-- ✅ Reactions (Add/Remove Like, Get Post Likes)
-- ✅ Profiles (Get User Profile)
-- ✅ Search (Search Posts, Search Users)
-
-The API is ready for production use! 🚀

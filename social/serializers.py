@@ -46,11 +46,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
     followers_count = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
     posts_count = serializers.SerializerMethodField()
+    age = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ["id", "username", "full_name", "bio", "profile_photo",
-                  "followers_count", "following_count", "posts_count"]
+        fields = [
+            "id", "email", "username", "full_name", "bio", "profile_photo",
+            "institute_name", "dob", "dept_course", "gender", "register_number",
+            "date_joined", "followers_count", "following_count", "posts_count", "age"
+        ]
 
     def get_followers_count(self, obj):
         return obj.followers.count()
@@ -60,3 +64,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def get_posts_count(self, obj):
         return obj.posts.count()
+
+    def get_age(self, obj):
+        """Calculate age from date of birth"""
+        from datetime import date
+        today = date.today()
+        return today.year - obj.dob.year - ((today.month, today.day) < (obj.dob.month, obj.dob.day))
