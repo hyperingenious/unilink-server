@@ -1,13 +1,52 @@
 # Unilink API Documentation
 
-A comprehensive social media platform API built with Django REST Framework.
+A comprehensive social media platform API built with Django REST Framework, designed for university students to connect, share content, and build communities.
 
-## Table of Contents
-- [Authentication](#authentication)
-- [User Management](#user-management)
-- [Social Features](#social-features)
-- [Error Codes](#error-codes)
-- [Data Models](#data-models)
+## 🚀 Platform Overview
+
+Unilink is a feature-rich social media platform specifically designed for university students. The platform enables users to:
+
+- **📱 Share Content**: Create posts with text, images, and videos
+- **💬 Engage**: Comment on posts with unlimited threaded replies
+- **👥 Connect**: Follow other students and build networks
+- **📊 Interact**: React to posts and show appreciation
+- **🔍 Discover**: Find new content and connect with peers
+- **📈 Track**: Monitor engagement and community metrics
+
+## 🏗️ Architecture & Features
+
+### **Core Technologies**
+- **Backend**: Django REST Framework
+- **Authentication**: JWT (JSON Web Tokens)
+- **File Storage**: Appwrite Cloud Storage
+- **Database**: PostgreSQL (recommended) / SQLite (development)
+- **API Style**: RESTful API with comprehensive documentation
+
+### **Key Features**
+- ✅ **User Registration & Authentication** with email verification
+- ✅ **Rich Media Posts** supporting text, images, and videos
+- ✅ **Threaded Comments** with unlimited nesting depth
+- ✅ **Follow System** for building user networks
+- ✅ **Personalized Feeds** with smart content distribution
+- ✅ **Reaction System** for post engagement
+- ✅ **Search Functionality** for posts and users
+- ✅ **File Upload** for media content
+- ✅ **Pagination** for optimal performance
+- ✅ **Gender-Balanced Feeds** for enhanced user experience
+
+### **API Characteristics**
+- **Authentication**: JWT-based authentication for secure access
+- **Pagination**: Standard and timestamp-based pagination
+- **Error Handling**: Comprehensive error responses with detailed messages
+- **Validation**: Robust input validation and sanitization
+- **Performance**: Optimized queries and efficient data structures
+
+## 📚 Table of Contents
+- [Authentication](#authentication) - User registration, login, and token management
+- [User Management](#user-management) - Profile management and user operations
+- [Social Features](#social-features) - Posts, comments, follows, and reactions
+- [Error Codes](#error-codes) - Comprehensive error handling guide
+- [Data Models](#data-models) - Complete data structure documentation
 
 ---
 
@@ -322,12 +361,22 @@ curl -X GET http://127.0.0.1:8000/api/auth/users/ \
 
 ## Social Features
 
+The social features section provides comprehensive functionality for creating and managing posts, comments, user relationships, and interactions within the Unilink platform.
+
 ### Posts
 
-#### 1. List All Posts
+Posts are the core content units in the social platform. Users can create text posts, attach images, or include videos. All posts support comments and reactions from other users.
+
+#### 1. List All Posts (Global Timeline)
 **GET** `/api/social/posts/`
 
-Get paginated list of all posts (newest first).
+Retrieve a paginated list of ALL posts from ALL users in the platform, ordered by creation date (newest first). This endpoint serves as the main discovery feed where users can explore content from across the entire platform.
+
+**Purpose:**
+- 🌐 **Global Discovery**: Browse content from all users on the platform
+- 📱 **Main Timeline**: Primary feed for exploring new content
+- 🔍 **Content Discovery**: Find new users and interesting posts
+- 🔄 **Real-time Updates**: Get the latest posts when refreshing the app
 
 **Headers:**
 ```
@@ -335,12 +384,13 @@ Authorization: Bearer <access_token>
 ```
 
 **Query Parameters:**
-- `page` (optional): Page number for pagination
+- `page` (optional): Page number for pagination (default: 1)
+- `page_size` (optional): Number of posts per page (default: 20, max: 100)
 
 **Response (200 OK):**
 ```json
 {
-  "count": 25,
+  "count": 150,
   "next": "http://127.0.0.1:8000/api/social/posts/?page=2",
   "previous": null,
   "results": [
@@ -349,25 +399,68 @@ Authorization: Bearer <access_token>
       "user": {
         "id": "456e7890-e89b-12d3-a456-426614174000",
         "email": "author@example.com",
-        "username": "author",
-        "full_name": "Author Name",
-        "bio": "Bio text",
-        "profile_photo": "https://example.com/photo.jpg",
+        "username": "johndoe",
+        "full_name": "John Doe",
+        "bio": "Software Developer | Tech Enthusiast",
+        "profile_photo": "https://cloud.appwrite.io/v1/storage/buckets/profile-photos/files/user123/view?project=project_id",
         "institute_name": "University of Technology",
         "dob": "1995-06-15",
         "dept_course": "Computer Science",
         "gender": "male",
         "register_number": "CS2024001"
       },
-      "text": "This is a post content",
-      "image_url": "https://example.com/image.jpg",
+      "text": "Just finished building an amazing mobile app! 🚀 The development process was challenging but incredibly rewarding. Can't wait to share it with everyone!",
+      "image_url": "https://cloud.appwrite.io/v1/storage/buckets/media/files/app-screenshot.jpg/view?project=project_id",
+      "video_url": "https://cloud.appwrite.io/v1/storage/buckets/media/files/app-demo.mp4/view?project=project_id",
       "created_at": "2024-01-15T10:30:00Z",
+      "comments": [
+        {
+          "id": "comment-uuid-1",
+          "user": {
+            "username": "alice_dev",
+            "full_name": "Alice Developer"
+          },
+          "text": "This looks amazing! What tech stack did you use?",
+          "created_at": "2024-01-15T10:35:00Z",
+          "subcomments": []
+        }
+      ],
+      "reactions_count": 15
+    },
+    {
+      "id": "789e0123-e89b-12d3-a456-426614174001",
+      "user": {
+        "id": "321e0987-e89b-12d3-a456-426614174001",
+        "username": "sarah_writer",
+        "full_name": "Sarah Writer",
+        "bio": "Content Creator | University Student",
+        "profile_photo": "https://cloud.appwrite.io/v1/storage/buckets/profile-photos/files/user456/view?project=project_id",
+        "institute_name": "Creative Arts University",
+        "dob": "1998-03-22",
+        "dept_course": "Journalism",
+        "gender": "female",
+        "register_number": "JA2024005"
+      },
+      "text": "Beautiful sunset from campus today! 📸 Sometimes the best moments are the simple ones.",
+      "image_url": "https://cloud.appwrite.io/v1/storage/buckets/media/files/sunset.jpg/view?project=project_id",
+      "video_url": null,
+      "created_at": "2024-01-15T09:15:00Z",
       "comments": [],
-      "reactions_count": 5
+      "reactions_count": 8
     }
   ]
 }
 ```
+
+**Error Responses:**
+- **401 Unauthorized**: Invalid or missing authentication token
+- **500 Internal Server Error**: Server-side error
+
+**Use Cases:**
+- **Mobile App Feed**: Load the main timeline in your mobile application
+- **Web Dashboard**: Display global posts in a web interface
+- **Content Discovery**: Allow users to discover new content and users
+- **Analytics**: Track popular content across the platform
 
 **cURL Example:**
 ```bash
@@ -380,7 +473,13 @@ curl -X GET http://127.0.0.1:8000/api/social/posts/ \
 #### 2. Create Post
 **POST** `/api/social/posts/`
 
-Create a new post.
+Create a new post with optional media attachments (images and/or videos). This endpoint allows users to share content with the community, supporting rich media content alongside text.
+
+**Purpose:**
+- 📝 **Content Creation**: Share thoughts, updates, and experiences
+- 🖼️ **Media Sharing**: Attach images or videos to posts
+- 🎥 **Video Content**: Share video content (newly supported feature)
+- 💬 **Community Engagement**: Start conversations with other users
 
 **Headers:**
 ```
@@ -389,12 +488,19 @@ Content-Type: application/json
 ```
 
 **Request Body:**
+All fields are optional, but at least one should be provided:
 ```json
 {
-  "text": "This is my new post!",
-  "image_url": "https://example.com/image.jpg"
+  "text": "Just finished my final project! 🎉 The past few months have been challenging but incredibly rewarding. Can't wait to present it tomorrow!",
+  "image_url": "https://cloud.appwrite.io/v1/storage/buckets/media/files/project-screenshot.jpg/view?project=project_id",
+  "video_url": "https://cloud.appwrite.io/v1/storage/buckets/media/files/project-demo.mp4/view?project=project_id"
 }
 ```
+
+**Field Descriptions:**
+- `text` (optional): The main content of the post. Supports Unicode characters, emojis, and line breaks
+- `image_url` (optional): URL to an image file. Must be a valid URL pointing to an image
+- `video_url` (optional): URL to a video file. Must be a valid URL pointing to a video
 
 **Response (201 Created):**
 ```json
@@ -405,21 +511,38 @@ Content-Type: application/json
     "email": "user@example.com",
     "username": "johndoe",
     "full_name": "John Doe",
-    "bio": "",
-    "profile_photo": null,
+    "bio": "Computer Science Student | Aspiring Developer",
+    "profile_photo": "https://cloud.appwrite.io/v1/storage/buckets/profile-photos/files/user123/view?project=project_id",
     "institute_name": "University of Technology",
     "dob": "1995-06-15",
     "dept_course": "Computer Science",
     "gender": "male",
     "register_number": "CS2024001"
   },
-  "text": "This is my new post!",
-  "image_url": "https://example.com/image.jpg",
+  "text": "Just finished my final project! 🎉 The past few months have been challenging but incredibly rewarding. Can't wait to present it tomorrow!",
+  "image_url": "https://cloud.appwrite.io/v1/storage/buckets/media/files/project-screenshot.jpg/view?project=project_id",
+  "video_url": "https://cloud.appwrite.io/v1/storage/buckets/media/files/project-demo.mp4/view?project=project_id",
   "created_at": "2024-01-15T10:30:00Z",
   "comments": [],
   "reactions_count": 0
 }
 ```
+
+**Error Responses:**
+- **400 Bad Request**: Invalid request data or validation errors
+- **401 Unauthorized**: Invalid or missing authentication token
+- **500 Internal Server Error**: Server-side error
+
+**Validation Rules:**
+- At least one of `text`, `image_url`, or `video_url` must be provided
+- URLs must be valid and accessible
+- Text content should be reasonable in length (no hard limit, but extremely long posts may affect performance)
+
+**Use Cases:**
+- **Text Posts**: Share thoughts, announcements, or updates
+- **Image Posts**: Share photos, screenshots, or visual content
+- **Video Posts**: Share video demonstrations, tutorials, or vlogs
+- **Mixed Media**: Combine text with images and/or videos for rich content
 
 **cURL Example:**
 ```bash
@@ -520,7 +643,19 @@ curl -X DELETE http://127.0.0.1:8000/api/social/posts/123e4567-e89b-12d3-a456-42
 #### 5. Get Personalized Feed
 **GET** `/api/social/feed/`
 
-Get personalized feed with timestamp-based pagination and gender distribution. For male users, the feed shows 70% posts from female users.
+Get a personalized feed showing posts from users you follow plus your own posts. This endpoint uses advanced timestamp-based pagination and includes gender distribution algorithms for enhanced user experience.
+
+**Purpose:**
+- 🏠 **Personalized Timeline**: See content from users you care about
+- 📊 **Smart Distribution**: Gender-balanced content distribution
+- ⚡ **Efficient Pagination**: Timestamp-based pagination for smooth scrolling
+- 🔄 **Real-time Updates**: Get latest posts from your network
+
+**Algorithm Details:**
+- Shows posts from users you follow + your own posts
+- For male users: 70% of posts are from female users (gender balance)
+- For female users: Standard chronological feed from followed users
+- Posts are ordered by creation time (newest first)
 
 **Headers:**
 ```
@@ -528,24 +663,26 @@ Authorization: Bearer <access_token>
 ```
 
 **Query Parameters:**
-- `timestamp` (optional): ISO timestamp for pagination (e.g., "2024-01-15T10:30:00Z")
-- `type` (optional): Pagination direction - "new" (newer than timestamp) or "old" (older than timestamp). Default: "old"
+- `timestamp` (optional): ISO 8601 timestamp for pagination (e.g., "2024-01-15T10:30:00Z")
+- `type` (optional): Pagination direction
+  - `"old"` (default): Get posts older than the timestamp
+  - `"new"`: Get posts newer than the timestamp (for refresh functionality)
 
 **Response (200 OK):**
 ```json
 {
   "count": 15,
   "next": "http://127.0.0.1:8000/api/social/feed/?timestamp=2024-01-15T10:30:00Z&type=old",
-  "previous": null,
+  "previous": "http://127.0.0.1:8000/api/social/feed/?timestamp=2024-01-15T09:15:00Z&type=new",
   "results": [
     {
       "id": "123e4567-e89b-12d3-a456-426614174000",
       "user": {
         "id": "456e7890-e89b-12d3-a456-426614174000",
-        "email": "followed@example.com",
-        "username": "followed_user",
-        "full_name": "Followed User",
-        "bio": "Bio text",
+        "email": "friend@example.com",
+        "username": "alice_dev",
+        "full_name": "Alice Developer",
+        "bio": "Software Engineer | Coffee Enthusiast",
         "profile_photo": "https://example.com/photo.jpg",
         "institute_name": "University of Technology",
         "dob": "1995-06-15",
@@ -652,10 +789,18 @@ curl -X GET http://127.0.0.1:8000/api/social/posts/123e4567-e89b-12d3-a456-42661
 
 ### Comments
 
+Comments enable users to engage with posts through threaded conversations. The system supports unlimited nested replies, allowing for rich discussions and community interaction.
+
 #### 1. Create Comment
 **POST** `/api/social/comments/`
 
-Create a new comment on a post or reply to an existing comment.
+Create a new comment on a post or reply to an existing comment. This endpoint supports both direct post comments and nested reply threads with unlimited depth.
+
+**Purpose:**
+- 💬 **Post Engagement**: Comment on posts to start conversations
+- 🔗 **Threaded Replies**: Reply to existing comments for discussions
+- 🌐 **Community Building**: Foster interactions between users
+- 📝 **Content Discussion**: Share thoughts and opinions on posts
 
 **Headers:**
 ```
@@ -667,12 +812,20 @@ Content-Type: application/json
 ```json
 {
   "post": "123e4567-e89b-12d3-a456-426614174000",
-  "text": "This is a comment",
+  "text": "Great post! I totally agree with your perspective. The examples you provided really help illustrate the concept. Looking forward to more insights! 👍",
   "parent": "789e0123-e89b-12d3-a456-426614174000"
 }
 ```
 
-**Note:** Use `post` field (not `post_id`) for the post UUID.
+**Field Descriptions:**
+- `post` (required): UUID of the post you want to comment on
+- `text` (required): The comment content. Supports Unicode, emojis, and line breaks
+- `parent` (optional): UUID of a parent comment if replying to an existing comment
+
+**Important Notes:**
+- Use `post` field (not `post_id`) for the post UUID
+- Comments support unlimited nesting depth
+- All comments are associated with the authenticated user
 
 **Response (201 Created):**
 ```json
@@ -830,7 +983,13 @@ curl -X GET http://127.0.0.1:8000/api/social/comments/789e0123-e89b-12d3-a456-42
 #### 1. Follow User
 **POST** `/api/social/follow/`
 
-Follow a user.
+Follow a user to see their posts in your personalized feed. Following a user creates a relationship that allows you to stay updated with their content and activities.
+
+**Purpose:**
+- 👥 **Build Connections**: Create relationships with other users
+- 📱 **Personalized Feed**: See posts from followed users in your feed
+- 🔔 **Stay Updated**: Get notified about new content from users you follow
+- 🌐 **Community Building**: Expand your network on the platform
 
 **Headers:**
 ```
@@ -845,12 +1004,26 @@ Content-Type: application/json
 }
 ```
 
+**Field Descriptions:**
+- `user_id` (required): UUID of the user you want to follow
+
 **Response (200 OK):**
 ```json
 {
   "status": "Now following johndoe"
 }
 ```
+
+**Error Responses:**
+- **400 Bad Request**: Invalid user ID or trying to follow yourself
+- **404 Not Found**: User with the specified ID doesn't exist
+- **409 Conflict**: Already following this user
+- **401 Unauthorized**: Invalid or missing authentication token
+
+**Important Notes:**
+- You cannot follow yourself
+- Following is a one-way relationship (doesn't automatically make them follow you back)
+- Once you follow a user, their posts will appear in your personalized feed
 
 **cURL Example:**
 ```bash
@@ -867,7 +1040,13 @@ curl -X POST http://127.0.0.1:8000/api/social/follow/ \
 #### 2. Unfollow User
 **DELETE** `/api/social/follow/`
 
-Unfollow a user.
+Stop following a user to remove their posts from your personalized feed. This action removes the follow relationship but doesn't delete any previous interactions.
+
+**Purpose:**
+- 🚫 **Manage Feed**: Remove users from your personalized timeline
+- 🎯 **Curate Content**: Control what content appears in your feed
+- 🔄 **Relationship Management**: Manage your following list
+- 📱 **Feed Optimization**: Keep your feed relevant to your interests
 
 **Headers:**
 ```
@@ -882,12 +1061,26 @@ Content-Type: application/json
 }
 ```
 
+**Field Descriptions:**
+- `user_id` (required): UUID of the user you want to unfollow
+
 **Response (200 OK):**
 ```json
 {
   "status": "Unfollowed johndoe"
 }
 ```
+
+**Error Responses:**
+- **400 Bad Request**: Invalid user ID or trying to unfollow yourself
+- **404 Not Found**: User with the specified ID doesn't exist or you're not following them
+- **401 Unauthorized**: Invalid or missing authentication token
+
+**Important Notes:**
+- Unfollowing a user removes their posts from your personalized feed
+- Previous comments and interactions remain intact
+- You can re-follow the user later if desired
+- This action is reversible
 
 **cURL Example:**
 ```bash
@@ -1026,10 +1219,18 @@ curl -X GET http://127.0.0.1:8000/api/social/users/456e7890-e89b-12d3-a456-42661
 
 ### Reactions
 
+Reactions allow users to express their feelings and engagement with posts. The system supports various reaction types, with likes being the primary form of positive feedback.
+
 #### 1. Add Reaction
 **POST** `/api/social/react/`
 
-Add a reaction (like) to a post.
+Add a reaction to a post to show your appreciation or engagement. This creates a positive interaction between you and the post author.
+
+**Purpose:**
+- 👍 **Show Appreciation**: Express positive feedback on posts
+- 💬 **Engage with Content**: Participate in community interactions
+- 📊 **Content Metrics**: Help authors understand post popularity
+- 🔗 **Social Connection**: Build relationships through interactions
 
 **Headers:**
 ```
@@ -1045,12 +1246,28 @@ Content-Type: application/json
 }
 ```
 
+**Field Descriptions:**
+- `post_id` (required): UUID of the post you want to react to
+- `reaction_type` (required): Type of reaction. Currently supports:
+  - `"like"`: Positive reaction to show appreciation
+
 **Response (200 OK):**
 ```json
 {
   "status": "like added"
 }
 ```
+
+**Error Responses:**
+- **400 Bad Request**: Invalid post ID or reaction type
+- **404 Not Found**: Post with the specified ID doesn't exist
+- **409 Conflict**: You've already reacted to this post
+- **401 Unauthorized**: Invalid or missing authentication token
+
+**Important Notes:**
+- You can only react once per post
+- Reactions are counted in the post's `reactions_count` field
+- Reactions help determine post popularity and engagement
 
 **cURL Example:**
 ```bash
@@ -1418,6 +1635,7 @@ curl -X GET http://127.0.0.1:8000/api/social/following/ \
   "user": "User (Foreign Key)",
   "text": "string (optional)",
   "image_url": "URL (optional)",
+  "video_url": "URL (optional)",
   "created_at": "datetime (auto-generated)"
 }
 ```
@@ -1549,7 +1767,7 @@ https://yourdomain.com/api/
 - Users cannot follow themselves
 - Comments support nested replies (unlimited depth)
 - Search is case-insensitive
-- Image URLs should be valid URLs
+- Image and video URLs should be valid URLs
 - All text fields support Unicode characters
 - **Important**: Use `post` field (not `post_id`) when creating comments
 - Feed shows posts from users you follow plus your own posts

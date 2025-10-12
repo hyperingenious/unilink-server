@@ -34,7 +34,7 @@ urlpatterns = [
     # GET /posts/ - List all posts (paginated, newest first)
     # POST /posts/ - Create a new post
     # Authentication: Required
-    # Request Body (POST): {"text": "string", "image_url": "string (optional)"}
+    # Request Body (POST): {"text": "string", "image_url": "string (optional)", "video_url": "string (optional)"}
     # Response: List of posts or created post object
     path("posts/", PostListCreateView.as_view(), name="posts"),
     

@@ -24,7 +24,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ["id", "user", "text", "image_url", "created_at", "comments", "reactions_count"]
+        fields = ["id", "user", "text", "image_url", "video_url", "created_at", "comments", "reactions_count"]
 
     def get_reactions_count(self, obj):
         return obj.reactions.count()
